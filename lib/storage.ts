@@ -1,7 +1,7 @@
 import type { GameState } from "@/types/game";
 import { createInitialState } from "./gameLogic";
 
-const STORAGE_KEY = "money-empire-save-v2";
+const STORAGE_KEY = "money-empire-save-v3";
 
 export function saveGame(state: GameState): void {
   if (typeof window === "undefined") return;
@@ -19,7 +19,17 @@ export function loadGame(): GameState | null {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as GameState;
-    return { ...createInitialState(), ...parsed };
+    const merged = { ...createInitialState(), ...parsed };
+    // Sauvegardes existantes : skip intro si déjà en jeu
+    if (merged.capital > 150 && !merged.campaign?.introDone) {
+      merged.campaign = {
+        ...merged.campaign,
+        introDone: true,
+        playstyle: merged.campaign.playstyle ?? "balanced",
+      };
+      merged.gamePhase = merged.gamePhase === "intro" ? "playing" : merged.gamePhase;
+    }
+    return merged;
   } catch {
     return null;
   }

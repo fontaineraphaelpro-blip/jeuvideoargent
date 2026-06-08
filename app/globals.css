@@ -933,3 +933,231 @@ html, body {
   .hand { width: 60px; height: 36px; }
   .player-hands { width: 200px; }
 }
+
+/* Game modals & campaign */
+.game-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.game-modal {
+  background: linear-gradient(145deg, #151b2e, #0c1222);
+  border: 1px solid rgba(245, 197, 66, 0.25);
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 520px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.game-modal h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #f5c542, #ffe08a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.game-modal-sub {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  margin: 1rem 0;
+  line-height: 1.6;
+}
+
+.game-modal-note {
+  font-size: 0.65rem;
+  color: #475569;
+  margin-top: 1rem;
+}
+
+.playstyle-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.playstyle-card {
+  text-align: left;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.playstyle-card:hover {
+  border-color: rgba(245, 197, 66, 0.4);
+}
+
+.playstyle-card h3 {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+}
+
+.playstyle-card p {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.playstyle-card--aggressive { border-color: rgba(239, 68, 68, 0.3); }
+.playstyle-card--conservative { border-color: rgba(16, 185, 129, 0.3); }
+
+.game-modal--bankrupt { border-color: rgba(239, 68, 68, 0.4); }
+.game-modal--bankrupt h1 { background: linear-gradient(135deg, #ef4444, #f87171); -webkit-background-clip: text; background-clip: text; }
+
+.ending-title {
+  font-size: 1.1rem;
+  color: #f87171;
+  font-weight: 600;
+  margin: 0.5rem 0;
+}
+
+.bankrupt-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+  text-align: left;
+}
+
+.bankrupt-stats div {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.75rem;
+  border-radius: 8px;
+}
+
+.bankrupt-stats span {
+  display: block;
+  font-size: 0.65rem;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.bankrupt-stats strong {
+  font-size: 0.9rem;
+}
+
+.game-modal-btn {
+  background: linear-gradient(135deg, #f5c542, #d4a012);
+  color: #000;
+  font-weight: 700;
+  padding: 0.75rem 2rem;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.campaign-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  font-size: 0.7rem;
+}
+
+.campaign-guide-header {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.campaign-guide-header h2 {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #f5c542;
+}
+
+.campaign-guide-header p {
+  color: #94a3b8;
+  line-height: 1.5;
+  margin-top: 0.25rem;
+}
+
+.campaign-freedom {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  padding: 0.5rem;
+  border-radius: 6px;
+  color: #93c5fd;
+  font-style: italic;
+}
+
+.campaign-objectives h3,
+.campaign-hints h3,
+.campaign-economy h3 {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-bottom: 0.35rem;
+}
+
+.campaign-obj {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
+}
+
+.campaign-obj--done {
+  color: #10b981;
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.campaign-hints p {
+  color: #64748b;
+  line-height: 1.5;
+  margin-bottom: 0.2rem;
+}
+
+.campaign-stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.2rem 0;
+}
+
+.campaign-warning {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 0.5rem;
+  border-radius: 6px;
+  color: #fca5a5;
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.campaign-action-btn {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  padding: 0.35rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  cursor: pointer;
+}
+
+.desktop-icon--locked {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.os-warning-pill {
+  font-size: 0.55rem;
+  color: #f87171;
+  animation: pulse-glow 1.5s infinite;
+}

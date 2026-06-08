@@ -88,6 +88,25 @@ export function createInitialState(): GameState {
     clickIncomeCache: 0,
     investmentIncomeCache: 0,
     temporaryBonuses: [],
+    gamePhase: "intro",
+    campaign: {
+      chapterId: "ch1_first_day",
+      completedChapters: [],
+      introDone: false,
+      playstyle: null,
+      objectivesDone: [],
+    },
+    runEconomy: {
+      debt: 0,
+      debtInterestPerSec: 0,
+      overheadPerSec: 0,
+      burnStreakSec: 0,
+      totalLosses: 0,
+      loansTaken: 0,
+      businessFailures: 0,
+      lastOverheadTick: Date.now(),
+    },
+    endingTitle: null,
   };
 }
 
@@ -146,7 +165,9 @@ export function getCategoryBonus(state: GameState, category: BusinessCategory): 
 
 export function calculatePassiveIncome(state: GameState): number {
   let total = 0;
-  const passiveMult = getUpgradeMultiplier(state, "passive");
+  const playstyleMult = state.campaign.playstyle === "conservative" ? 0.85
+    : state.campaign.playstyle === "aggressive" ? 1.25 : 1;
+  const passiveMult = getUpgradeMultiplier(state, "passive") * playstyleMult;
   const globalMult = getUpgradeMultiplier(state, "global");
   const prestigeMult = 1 + state.prestige.points * 0.1;
   const repMult = 1 + state.reputation * 0.005;
@@ -207,7 +228,9 @@ export function getAchievementBonus(state: GameState): number {
 }
 
 export function calculateClickIncome(state: GameState): number {
-  let income = state.clickPower;
+  const playstyleMult = state.campaign.playstyle === "conservative" ? 0.85
+    : state.campaign.playstyle === "aggressive" ? 1.25 : 1;
+  let income = state.clickPower * playstyleMult;
   income *= getUpgradeMultiplier(state, "click");
   income *= getUpgradeMultiplier(state, "global");
   income *= 1 + state.prestige.points * 0.1;

@@ -3,11 +3,13 @@
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Building2, PieChart, LineChart, Target, ArrowUpCircle,
-  Users, Award, BarChart3, Crown, Settings, Zap, X, Minus, Mail, Wifi,
+  Users, Award, BarChart3, Crown, Settings, Zap, X, Minus, Mail, Wifi, BookOpen,
   type LucideIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { GameState, TabId } from "@/types/game";
+import { isAppUnlocked } from "@/lib/campaign";
+import CampaignGuide from "./CampaignGuide";
 import { formatMoney } from "@/lib/formatMoney";
 import { GOLDEN_RUSH_METER_MAX } from "@/lib/gameData";
 import CapitalCounter from "./CapitalCounter";
@@ -45,6 +47,7 @@ const APPS: AppDef[] = [
   { id: "achievements", name: "Trophées", icon: Award, color: "#eab308", description: "Succès débloqués" },
   { id: "stats", name: "Analytics", icon: BarChart3, color: "#64748b", description: "Statistiques" },
   { id: "prestige", name: "Prestige", icon: Crown, color: "#f5c542", description: "Reset & bonus" },
+  { id: "guide", name: "Guide", icon: BookOpen, color: "#f59e0b", description: "Parcours & conseils" },
   { id: "settings", name: "Paramètres", icon: Settings, color: "#94a3b8", description: "Réglages du jeu" },
 ];
 
@@ -68,14 +71,23 @@ interface Props {
     manualSave: () => void;
     reset: () => void;
     eventChoice: (eventId: string, choiceId: string) => void;
+    takeLoan?: () => void;
+    emergencySell?: (id: string) => void;
   };
 }
 
 export default function DesktopOS({ state, clickIncome, onIncomeClick, onClaim, actions }: Props) {
-  const [openApp, setOpenApp] = useState<TabId | null>("dashboard");
+  const [openApp, setOpenApp] = useState<TabId | null>("guide");
   const [minimized, setMinimized] = useState<Set<TabId>>(new Set());
 
+  useEffect(() => {
+    if (state.gamePhase === "playing" && openApp === null) {
+      setOpenApp("guide");
+    }
+  }, [state.gamePhase, openApp]);
+
   const openWindow = (id: TabId) => {
+    if (!isAppUnlocked(state, id)) return;
     setMinimized((prev) => {
       const next = new Set(prev);
       next.delete(id);
@@ -135,6 +147,14 @@ export default function DesktopOS({ state, clickIncome, onIncomeClick, onClaim, 
         return <StatsPanel state={state} />;
       case "prestige":
         return <PrestigePanel state={state} onPrestige={actions.prestige} />;
+      case "guide":
+        return (
+          <CampaignGuide
+            state={state}
+            onTakeLoan={actions.takeLoan}
+            onEmergencySell={actions.emergencySell}
+          />
+        );
       case "settings":
         return (
           <SettingsPanel
@@ -160,14 +180,16 @@ export default function DesktopOS({ state, clickIncome, onIncomeClick, onClaim, 
       <div className="desktop-icons">
         {APPS.map((app) => {
           const Icon = app.icon;
+          const unlocked = isAppUnlocked(state, app.id);
           const isOpen = openApp === app.id;
           const isMin = minimized.has(app.id);
           return (
             <motion.button
               key={app.id}
-              className={`desktop-icon ${isOpen ? "desktop-icon--active" : ""} ${isMin ? "desktop-icon--minimized" : ""}`}
-              onDoubleClick={() => openWindow(app.id)}
-              onClick={() => openWindow(app.id)}
+              className={`desktop-icon ${isOpen ? "desktop-icon--active" : ""} ${isMin ? "desktop-icon--minimized" : ""} ${!unlocked ? "desktop-icon--locked" : ""}`}
+              onDoubleClick={() => unlocked && openWindow(app.id)}
+              onClick={() => unlocked && openWindow(app.id)}
+              disabled={!unlocked}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               title={app.description}
@@ -235,9 +257,15 @@ export default function DesktopOS({ state, clickIncome, onIncomeClick, onClaim, 
 
         <div className="os-taskbar-center">
           <div className="os-capital-pill">
-            <span className="text-empire-gold font-bold">{formatMoney(state.capital)}</span>
+            <span className={`font-bold ${state.capital < 0 ? "text-red-400" : "text-empire-gold"}`}>{formatMoney(state.capital)}</span>
             <span className="text-emerald-400 text-[10px]">+{formatMoney(state.incomePerSecond)}/s</span>
+            {state.runEconomy.overheadPerSec > 0 && (
+              <span className="text-red-400 text-[10px]">-{formatMoney(state.runEconomy.overheadPerSec)}/s</span>
+            )}
           </div>
+          {state.gamePhase === "struggling" && (
+            <span className="os-warning-pill">⚠ En difficulté</span>
+          )}
           <div className="os-golden-meter">
             <div
               className="os-golden-meter-fill"

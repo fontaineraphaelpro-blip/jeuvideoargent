@@ -1,8 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import type { FloatingMoneyItem, GameState } from "@/types/game";
+import type { FloatingMoneyItem, GameState, Playstyle } from "@/types/game";
+import { checkCampaignObjectives } from "@/lib/campaign";
 import { playSound } from "@/lib/audio";
+import {
+  applyCapitalChange,
+  applyMarketPortfolioShock,
+  emergencySellBusiness,
+  maybeBusinessFailure,
+  takeEmergencyLoan,
+  tickInvestments,
+  tickRunEconomy,
+} from "@/lib/runEconomy";
 import { GAME_EVENTS, STRATEGIC_DECISIONS } from "@/lib/events";
 import { shouldRefreshDailyObjectives, generateDailyObjectives, getTodaySeed } from "@/lib/dailyObjectives";
 import {
@@ -61,9 +71,18 @@ type Action =
   | { type: "CLEAR_FLOATING"; id: string }
   | { type: "RANDOM_EVENT" }
   | { type: "STRATEGIC_DECISION" }
-  | { type: "MARKET_TICK" };
+  | { type: "MARKET_TICK" }
+  | { type: "SET_PLAYSTYLE"; playstyle: Playstyle }
+  | { type: "TAKE_LOAN" }
+  | { type: "EMERGENCY_SELL"; businessId: string }
+  | { type: "RESTART_RUN" };
 
 let floatingId = 0;
+let failureCheckCounter = 0;
+
+function canPlay(state: GameState): boolean {
+  return state.gamePhase !== "bankrupt" && state.gamePhase !== "intro";
+}
 
 function gameReducer(state: GameState, action: Action): GameState {
   const sound = state.settings.soundEnabled;
@@ -73,9 +92,12 @@ function gameReducer(state: GameState, action: Action): GameState {
       return action.state;
 
     case "TICK": {
+      if (state.gamePhase === "intro" || state.gamePhase === "bankrupt") return state;
+
       let s = { ...state };
       const now = Date.now();
-      s.stats = { ...s.stats, playTimeSeconds: s.stats.playTimeSeconds + action.delta / 1000 };
+      const deltaSec = action.delta / 1000;
+      s.stats = { ...s.stats, playTimeSeconds: s.stats.playTimeSeconds + deltaSec };
 
       if (s.combo > 0 && now - s.lastClickTime > COMBO_DECAY_MS) {
         s.combo = 0;
@@ -91,28 +113,25 @@ function gameReducer(state: GameState, action: Action): GameState {
 
       const passive = calculatePassiveIncome(s);
       s.incomePerSecond = passive;
-      const gain = passive * (action.delta / 1000);
+      const gain = passive * deltaSec;
       if (gain > 0) {
-        s.capital += gain;
+        s = applyCapitalChange(s, gain);
         s.passiveIncomeCache += gain;
-        s.stats.totalEarned += gain;
-        s.stats.bestCapital = Math.max(s.stats.bestCapital, s.capital);
       }
 
-      for (const inv of s.investments) {
-        const def = INVESTMENTS.find((i) => i.id === inv.id);
-        if (!def || inv.amount <= 0) continue;
-        const returnRate = def.avgReturn / 365 / 24 / 3600;
-        const change = inv.currentValue * returnRate * action.delta / 1000 * (1 + (Math.random() - 0.5) * def.volatility * 10);
-        inv.currentValue += change;
+      s = tickRunEconomy(s, deltaSec);
+      s = tickInvestments(s, action.delta);
+
+      failureCheckCounter += action.delta;
+      if (failureCheckCounter > 15000) {
+        failureCheckCounter = 0;
+        s = maybeBusinessFailure(s);
       }
 
       if (now - s.lastTickTime > 5000) {
         s.capitalHistory = [...s.capitalHistory, { time: now, value: s.capital }].slice(-60);
         s.lastTickTime = now;
       }
-
-      s.wealthTitle = s.capital >= 1000 ? s.wealthTitle : "Débutant";
 
       if (shouldRefreshDailyObjectives(s.dailySeed)) {
         s.dailyObjectives = generateDailyObjectives();
@@ -121,6 +140,7 @@ function gameReducer(state: GameState, action: Action): GameState {
 
       s = updateMissions(s);
       s = updateAchievements(s);
+      s = checkCampaignObjectives(s);
       const milestoneResult = checkMilestones(s);
       s = milestoneResult.state;
 
@@ -128,6 +148,7 @@ function gameReducer(state: GameState, action: Action): GameState {
     }
 
     case "CLICK": {
+      if (!canPlay(state)) return state;
       let s = { ...state };
       const now = Date.now();
       const timeSince = now - s.lastClickTime;
@@ -141,11 +162,9 @@ function gameReducer(state: GameState, action: Action): GameState {
       s.lastClickTime = now;
 
       const income = calculateClickIncome(s);
-      s.capital += income;
+      s = applyCapitalChange(s, income);
       s.clickIncomeCache += income;
       s.stats.totalClicks++;
-      s.stats.totalEarned += income;
-      s.stats.bestCapital = Math.max(s.stats.bestCapital, s.capital);
       s.goldenRushMeter = Math.min(GOLDEN_RUSH_METER_MAX, s.goldenRushMeter + 1 + s.combo * 0.2);
       s = updateDailyObjectives(s, "daily_clicks");
       s = addXp(s, 1);
@@ -153,11 +172,40 @@ function gameReducer(state: GameState, action: Action): GameState {
       s = updateAchievements(s);
       const mr = checkMilestones(s);
       s = mr.state;
+      s = checkCampaignObjectives(s);
       playSound("click", sound);
       return s;
     }
 
+    case "SET_PLAYSTYLE": {
+      return {
+        ...state,
+        campaign: { ...state.campaign, playstyle: action.playstyle, introDone: true },
+        gamePhase: "playing",
+      };
+    }
+
+    case "TAKE_LOAN": {
+      if (!canPlay(state)) return state;
+      const s = takeEmergencyLoan(state);
+      playSound("event", sound);
+      return addNotification(s, "Prêt d'urgence", "Dette contractée. Les intérêts grignotent ton capital.", "warning");
+    }
+
+    case "EMERGENCY_SELL": {
+      if (!canPlay(state)) return state;
+      const s = emergencySellBusiness(state, action.businessId);
+      playSound("error", sound);
+      return addNotification(s, "Vente d'urgence", "Tu as dû vendre à perte pour survivre.", "warning");
+    }
+
+    case "RESTART_RUN": {
+      resetGame();
+      return createInitialState();
+    }
+
     case "BUY_BUSINESS": {
+      if (!canPlay(state)) return state;
       const b = BUSINESSES.find((x) => x.id === action.id);
       if (!b) return state;
       let s = { ...state };
@@ -237,6 +285,8 @@ function gameReducer(state: GameState, action: Action): GameState {
       } else {
         s.investments = [...s.investments, { id: action.id, amount: action.amount, entryPrice: 1, currentValue: action.amount, history: [action.amount] }];
       }
+      const riskMap = { low: 1, medium: 3, high: 6, extreme: 12 };
+      s.globalRisk = Math.min(100, s.globalRisk + (riskMap[inv.risk] ?? 2));
       s = updateDailyObjectives(s, "daily_invest", action.amount);
       playSound("purchase", sound);
       return s;
@@ -270,6 +320,7 @@ function gameReducer(state: GameState, action: Action): GameState {
       s.market = s.market.map((x) =>
         x.id === action.id ? { ...x, owned: newOwned, avgBuyPrice: newAvg } : x
       );
+      s.globalRisk = Math.min(100, s.globalRisk + 2);
       s = updateDailyObjectives(s, "daily_trades");
       playSound("purchase", sound);
       return s;
@@ -367,11 +418,10 @@ function gameReducer(state: GameState, action: Action): GameState {
       if (!ev || !choice) return state;
       let s = { ...state };
       if (choice.effects.cashBonus) {
-        const bonus = choice.effects.cashBonus > 1
+        const bonus = choice.effects.cashBonus > 1 || choice.effects.cashBonus < -1
           ? choice.effects.cashBonus
           : s.capital * choice.effects.cashBonus;
-        s.capital += bonus;
-        s.stats.totalEarned += Math.max(0, bonus);
+        s = applyCapitalChange(s, bonus, ev.title);
       }
       if (choice.effects.riskChange) s.globalRisk = Math.max(0, s.globalRisk + choice.effects.riskChange);
       if (choice.id === "refuse") s.reputation += 5;
@@ -393,13 +443,15 @@ function gameReducer(state: GameState, action: Action): GameState {
         duration?: number;
       };
       if (fx.cash !== undefined) {
-        if (fx.cash < 0 && s.capital < Math.abs(fx.cash)) {
-          playSound("error", sound);
-          return s;
+        let cash = fx.cash;
+        if (action.choiceId === "all_in") {
+          cash = Math.random() < 0.35 ? -10000 : 30000;
         }
-        s.capital += fx.cash;
-        if (fx.cash > 0) s.stats.totalEarned += fx.cash;
-        else s.stats.totalSpent += Math.abs(fx.cash);
+        if (cash < 0 && s.capital < Math.abs(cash)) {
+          cash = -s.capital * 0.6;
+        }
+        s = applyCapitalChange(s, cash, dec.title);
+        if (cash < 0) s.stats.totalSpent += Math.abs(cash);
       }
       if (fx.reputation !== undefined) s.reputation += fx.reputation;
       if (fx.risk !== undefined) s.globalRisk = Math.max(0, Math.min(100, s.globalRisk + fx.risk));
@@ -438,14 +490,17 @@ function gameReducer(state: GameState, action: Action): GameState {
       return createInitialState();
 
     case "RANDOM_EVENT": {
+      if (!canPlay(state)) return state;
       const ev = GAME_EVENTS[Math.floor(Math.random() * GAME_EVENTS.length)];
       let s = { ...state };
       if (ev.effects.cashBonus) {
         const bonus = ev.effects.cashBonus > 1 || ev.effects.cashBonus < -1
           ? ev.effects.cashBonus
           : s.capital * Math.abs(ev.effects.cashBonus) * (ev.effects.cashBonus < 0 ? -1 : 1);
-        s.capital = Math.max(10, s.capital + bonus);
-        if (bonus > 0) s.stats.totalEarned += bonus;
+        s = applyCapitalChange(s, bonus, ev.title);
+      }
+      if (ev.type === "negative" && (ev.id === "panic" || ev.id === "crash_crypto")) {
+        s = applyMarketPortfolioShock(s, ev.id === "panic" ? 0.12 : 0.2);
       }
       if (ev.duration > 0) {
         s.activeEvents = [...s.activeEvents, {
@@ -603,6 +658,10 @@ export function useGameState() {
       toggleCompact: () => dispatch({ type: "TOGGLE_COMPACT" }),
       manualSave: () => dispatch({ type: "MANUAL_SAVE" }),
       reset: () => dispatch({ type: "RESET" }),
+      setPlaystyle: (playstyle: Playstyle) => dispatch({ type: "SET_PLAYSTYLE", playstyle }),
+      takeLoan: () => dispatch({ type: "TAKE_LOAN" }),
+      emergencySell: (businessId: string) => dispatch({ type: "EMERGENCY_SELL", businessId }),
+      restartRun: () => dispatch({ type: "RESTART_RUN" }),
     },
   };
 }

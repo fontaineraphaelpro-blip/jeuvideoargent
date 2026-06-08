@@ -35,7 +35,48 @@ export type TabId =
   | "achievements"
   | "stats"
   | "prestige"
-  | "settings";
+  | "settings"
+  | "guide";
+
+export type GamePhase = "intro" | "playing" | "struggling" | "bankrupt" | "won";
+export type Playstyle = "conservative" | "balanced" | "aggressive";
+
+export interface CampaignObjective {
+  id: string;
+  label: string;
+  metric: string;
+  target: number;
+  optional?: boolean;
+}
+
+export interface CampaignChapter {
+  id: string;
+  title: string;
+  narrative: string;
+  objectives: CampaignObjective[];
+  hints: string[];
+  unlockApps: TabId[];
+  freedomNote?: string;
+}
+
+export interface CampaignState {
+  chapterId: string;
+  completedChapters: string[];
+  introDone: boolean;
+  playstyle: Playstyle | null;
+  objectivesDone: string[];
+}
+
+export interface RunEconomy {
+  debt: number;
+  debtInterestPerSec: number;
+  overheadPerSec: number;
+  burnStreakSec: number;
+  totalLosses: number;
+  loansTaken: number;
+  businessFailures: number;
+  lastOverheadTick: number;
+}
 
 export interface Business {
   id: string;
@@ -296,7 +337,7 @@ export interface GameNotification {
   id: string;
   title: string;
   message: string;
-  type: "success" | "info" | "warning" | "milestone" | "levelup" | "achievement";
+  type: "success" | "info" | "warning" | "milestone" | "levelup" | "achievement" | "danger" | "loss";
   timestamp: number;
 }
 
@@ -355,4 +396,8 @@ export interface GameState {
     costReduction: number;
     expiresAt: number;
   }[];
+  gamePhase: GamePhase;
+  campaign: CampaignState;
+  runEconomy: RunEconomy;
+  endingTitle: string | null;
 }

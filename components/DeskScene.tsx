@@ -16,6 +16,8 @@ import MilestoneOverlay from "./MilestoneOverlay";
 import Confetti from "./Confetti";
 import Particles from "./Particles";
 import DecisionModal from "./DecisionModal";
+import IntroModal from "./IntroModal";
+import BankruptcyModal from "./BankruptcyModal";
 
 export default function DeskScene() {
   const game = useGameState();
@@ -78,6 +80,12 @@ export default function DeskScene() {
       <Confetti active={showConfetti} />
       <Particles active={showParticles} />
       <DecisionModal state={state} onChoice={actions.decisionChoice} />
+      {state.gamePhase === "intro" && (
+        <IntroModal onChoose={actions.setPlaystyle} />
+      )}
+      {state.gamePhase === "bankrupt" && (
+        <BankruptcyModal state={state} onRestart={actions.restartRun} />
+      )}
 
       <DeskEnvironment
         theme={theme}
