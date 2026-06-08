@@ -5,8 +5,16 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -H 0.0.0.0",
     "lint": "next lint"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "overrides": {
+    "@emnapi/core": "1.11.0",
+    "@emnapi/runtime": "1.11.0",
+    "@emnapi/wasi-threads": "1.2.2"
   },
   "dependencies": {
     "framer-motion": "^11.18.2",
