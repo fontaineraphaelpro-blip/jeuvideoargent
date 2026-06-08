@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import type { FloatingMoneyItem, GameState, Playstyle } from "@/types/game";
 import { checkCampaignObjectives } from "@/lib/campaign";
-import { checkPlaytimeUnlocks } from "@/lib/progression";
+import { checkCareerProgression } from "@/lib/progression";
 import { playSound } from "@/lib/audio";
 import {
   applyCapitalChange,
@@ -142,7 +142,7 @@ function gameReducer(state: GameState, action: Action): GameState {
       s = updateMissions(s);
       s = updateAchievements(s);
       s = checkCampaignObjectives(s);
-      s = checkPlaytimeUnlocks(s);
+      s = checkCareerProgression(s);
       const milestoneResult = checkMilestones(s);
       s = milestoneResult.state;
 
@@ -154,12 +154,12 @@ function gameReducer(state: GameState, action: Action): GameState {
       let s = { ...state };
       const now = Date.now();
       const timeSince = now - s.lastClickTime;
-      if (timeSince < 400) {
-        s.combo = Math.min(s.combo + 1, 20);
-        s.comboMultiplier = 1 + s.combo * 0.1;
+      if (timeSince < 500) {
+        s.combo = Math.min(s.combo + 1, 35);
+        s.comboMultiplier = 1 + s.combo * 0.18;
       } else if (timeSince > COMBO_DECAY_MS) {
         s.combo = 1;
-        s.comboMultiplier = 1.1;
+        s.comboMultiplier = 1.2;
       }
       s.lastClickTime = now;
 
@@ -167,9 +167,13 @@ function gameReducer(state: GameState, action: Action): GameState {
       s = applyCapitalChange(s, income);
       s.clickIncomeCache += income;
       s.stats.totalClicks++;
-      s.goldenRushMeter = Math.min(GOLDEN_RUSH_METER_MAX, s.goldenRushMeter + 1 + s.combo * 0.2);
+      s.goldenRushMeter = Math.min(
+        GOLDEN_RUSH_METER_MAX,
+        s.goldenRushMeter + 2.5 + s.combo * 0.5
+      );
       s = updateDailyObjectives(s, "daily_clicks");
-      s = addXp(s, 1);
+      s = addXp(s, 2 + Math.floor(s.combo / 5));
+      s = checkCareerProgression(s);
       s = updateMissions(s);
       s = updateAchievements(s);
       const mr = checkMilestones(s);

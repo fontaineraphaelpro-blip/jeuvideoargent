@@ -1,7 +1,7 @@
 import type { GameState, TabId } from "@/types/game";
 import { getCurrentChapter } from "./campaign";
 import { getCampaignMetric } from "./campaignMetrics";
-import { getAppUnlockInfo, getChapterProgress, getNextPlaytimeUnlock, isAppFullyUnlocked } from "./progression";
+import { getAppUnlockInfo, getChapterProgress, getLockedAppsSummary, isAppFullyUnlocked, APP_LABELS } from "./progression";
 
 export interface CoachStep {
   title: string;
@@ -48,23 +48,33 @@ export function getNextCoachStep(state: GameState): CoachStep {
     };
   }
 
-  // Suggest newly unlocked app
-  const nextPt = getNextPlaytimeUnlock(state);
-  if (nextPt) {
+  const locked = getLockedAppsSummary(state);
+  if (locked.length > 0) {
+    const next = locked[0];
     return {
-      title: "Continue à jouer",
-      description: `Prochain déblocage temps : « ${nextPt.title} » dans ${Math.ceil(nextPt.minPlayMinutes - state.stats.playTimeSeconds / 60)} min.`,
-      action: "Joue normalement — ta carrière avance",
+      title: "Prochain déblocage",
+      description: `${APP_LABELS[next.app]} : ${next.info.reason}`,
+      action: "Termine l'objectif en cours — récompense instantanée",
+      app: suggestBestApp(state),
+      priority: 25,
+    };
+  }
+
+  if (state.combo >= 5) {
+    return {
+      title: "Combo actif — ne lâche pas !",
+      description: `x${state.comboMultiplier.toFixed(1)} en cours. Chaque clic rapporte de plus en plus.`,
+      action: "Spam CashFlow — charge le Golden Rush",
       app: "dashboard",
-      priority: 20,
+      priority: 22,
     };
   }
 
   return {
-    title: "Liberté totale",
-    description: "Tu maîtrises le bureau. Expérimente, prends des risques ou consolide.",
-    action: "Choisis ton prochain mouvement",
-    app: "guide",
+    title: "Tout est ouvert — fonce !",
+    description: "Clique, achète, trade, investis. Chaque action = cash + XP + dopamine.",
+    action: "Choisis ton prochain coup",
+    app: "dashboard",
     priority: 10,
   };
 }

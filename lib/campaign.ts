@@ -1,5 +1,6 @@
 import type { CampaignChapter, CampaignState, GameState, Playstyle, TabId } from "@/types/game";
 import { getCampaignMetric } from "./campaignMetrics";
+import { applyCapitalChange } from "./runEconomy";
 
 export const CAMPAIGN_CHAPTERS: CampaignChapter[] = [
   {
@@ -8,16 +9,16 @@ export const CAMPAIGN_CHAPTERS: CampaignChapter[] = [
     narrative:
       "Tu viens d'installer ton PC. 100 € en poche, zéro client. Ton voisin de bureau dit que « tout le monde finit riche ici » — c'est faux. Commence par closer des deals sur CashFlow.",
     objectives: [
-      { id: "c1_clicks", label: "Closer 10 deals", metric: "total_clicks", target: 10 },
-      { id: "c1_capital", label: "Atteindre 150 €", metric: "capital", target: 150 },
+      { id: "c1_clicks", label: "Closer 5 deals", metric: "total_clicks", target: 5 },
+      { id: "c1_capital", label: "Atteindre 130 €", metric: "capital", target: 130 },
     ],
     hints: [
-      "Ouvre CashFlow sur l'écran et clique « Clôturer un deal ».",
-      "Chaque deal rapporte peu — la régularité compte.",
-      "Tu peux ignorer les autres apps pour l'instant.",
+      "Ouvre CashFlow et spam « Clôturer un deal » — chaque clic = cash instant.",
+      "Enchaîne les clics pour monter le combo x.",
+      "Plus tu cliques, plus le Golden Rush se charge.",
     ],
     unlockApps: ["dashboard", "guide", "settings"],
-    freedomNote: "Rien ne t'oblige à aller vite. Prends le temps de comprendre.",
+    freedomNote: "Go go go — le momentum est ton meilleur allié.",
   },
   {
     id: "ch2_first_asset",
@@ -34,7 +35,7 @@ export const CAMPAIGN_CHAPTERS: CampaignChapter[] = [
       "Si tu dépenses tout, tu ne pourras plus payer les frais.",
     ],
     unlockApps: ["dashboard", "business", "guide", "missions", "settings"],
-    freedomNote: "Tu peux continuer à ne cliquer que — mais tu progresseras lentement.",
+    freedomNote: "Achète vite — le passif fait exploser ton capital.",
   },
   {
     id: "ch3_market",
@@ -61,7 +62,7 @@ export const CAMPAIGN_CHAPTERS: CampaignChapter[] = [
     objectives: [
       { id: "c4_invest", label: "Investir ou refuser (libre)", metric: "investments_made", target: 1, optional: true },
       { id: "c4_risk", label: "Gérer ton risque (< 40 %)", metric: "risk_under_40", target: 1, optional: true },
-      { id: "c4_capital", label: "Atteindre 1 000 €", metric: "capital", target: 1000 },
+      { id: "c4_capital", label: "Atteindre 500 €", metric: "capital", target: 500 },
     ],
     hints: [
       "Investir est optionnel — la prudence est une stratégie valide.",
@@ -78,7 +79,7 @@ export const CAMPAIGN_CHAPTERS: CampaignChapter[] = [
       "Un email interne annonce des « réorganisations ». Les événements négatifs deviennent fréquents. Ceux qui survient ont gardé une réserve de cash.",
     objectives: [
       { id: "c5_survive_crisis", label: "Survivre à un événement négatif", metric: "survive_crisis", target: 1 },
-      { id: "c5_reserve", label: "Avoir 500 € de réserve", metric: "capital", target: 500 },
+      { id: "c5_reserve", label: "Avoir 300 € de réserve", metric: "capital", target: 300 },
     ],
     hints: [
       "Garde toujours 20 % de ton capital en liquidités.",
@@ -112,7 +113,7 @@ export const CAMPAIGN_CHAPTERS: CampaignChapter[] = [
     narrative:
       "Dernier palier du parcours guidé. Beaucoup s'arrêtent avant. D'autres font faillite ici. Le prestige n'est ouvert qu'aux rares qui atteignent le milliard.",
     objectives: [
-      { id: "c7_capital", label: "Atteindre 100 000 €", metric: "capital", target: 100000 },
+      { id: "c7_capital", label: "Atteindre 50 000 €", metric: "capital", target: 50000 },
       { id: "c7_no_debt", label: "Finir sans dette (bonus)", metric: "debt_free", target: 1, optional: true },
     ],
     hints: [
@@ -177,12 +178,15 @@ export function checkCampaignObjectives(state: GameState): GameState {
   const done = new Set(state.campaign.objectivesDone);
   let changed = false;
 
+  const newlyDone: typeof chapter.objectives = [];
+
   for (const obj of chapter.objectives) {
     if (done.has(obj.id)) continue;
     const val = getCampaignMetric(state, obj.metric);
     if (val >= obj.target) {
       done.add(obj.id);
       changed = true;
+      newlyDone.push(obj);
     }
   }
 
@@ -196,9 +200,29 @@ export function checkCampaignObjectives(state: GameState): GameState {
     campaign: { ...state.campaign, objectivesDone: [...done] },
   };
 
+  for (const obj of newlyDone) {
+    const reward = obj.optional ? 25 : 50;
+    s = applyCapitalChange(s, reward);
+    s = {
+      ...s,
+      notifications: [
+        {
+          id: `obj_${obj.id}_${Date.now()}`,
+          title: `✅ ${obj.label}`,
+          message: `+${reward} € — continue, t'es en feu !`,
+          type: "success" as const,
+          timestamp: Date.now(),
+        },
+        ...s.notifications,
+      ].slice(0, 20),
+    };
+  }
+
   if (allRequiredDone) {
     const idx = CAMPAIGN_CHAPTERS.findIndex((c) => c.id === chapter.id);
     const next = CAMPAIGN_CHAPTERS[idx + 1];
+    const chapterBonus = 150 + idx * 75;
+
     s = {
       ...s,
       campaign: {
@@ -208,13 +232,29 @@ export function checkCampaignObjectives(state: GameState): GameState {
         objectivesDone: [],
       },
     };
+
+    s = applyCapitalChange(s, chapterBonus);
+    s = {
+      ...s,
+      notifications: [
+        {
+          id: `ch_done_${chapter.id}`,
+          title: `🚀 Chapitre terminé !`,
+          message: `+${chapterBonus} € — ${next ? "nouvelle app débloquée !" : "parcours complété !"}`,
+          type: "milestone" as const,
+          timestamp: Date.now(),
+        },
+        ...s.notifications,
+      ].slice(0, 20),
+    };
+
     if (next) {
       s = {
         ...s,
         notifications: [
           {
             id: `ch_${Date.now()}`,
-            title: `📖 ${next.title}`,
+            title: `🔓 ${next.title}`,
             message: next.narrative.slice(0, 80) + "…",
             type: "info" as const,
             timestamp: Date.now(),
@@ -222,7 +262,7 @@ export function checkCampaignObjectives(state: GameState): GameState {
           ...s.notifications,
         ].slice(0, 20),
       };
-    } else if (state.capital >= 100_000) {
+    } else if (s.capital >= 50_000) {
       s = { ...s, gamePhase: "won", endingTitle: "Investisseur accompli" };
     }
   }

@@ -5,7 +5,7 @@ import type { GameState } from "@/types/game";
 import { getCurrentChapter } from "@/lib/campaign";
 import { formatMoney } from "@/lib/formatMoney";
 import { getCampaignMetric } from "@/lib/campaignMetrics";
-import { getChapterProgress, getCareerRank, getPlaytimeBonus } from "@/lib/progression";
+import { getChapterProgress, getCareerRank, getCareerBonus } from "@/lib/progression";
 import ProgressionRoadmap from "./ProgressionRoadmap";
 
 interface Props {
@@ -19,7 +19,7 @@ export default function CampaignGuide({ state, onTakeLoan, onEmergencySell }: Pr
   const done = new Set(state.campaign.objectivesDone);
   const chProgress = getChapterProgress(state);
   const rank = getCareerRank(state);
-  const timeBonus = getPlaytimeBonus(state);
+  const careerBonus = getCareerBonus(state);
 
   return (
     <div className="campaign-guide">
@@ -34,8 +34,8 @@ export default function CampaignGuide({ state, onTakeLoan, onEmergencySell }: Pr
           <span className="guide-summary-value">{state.campaign.completedChapters.length + 1}/7</span>
         </div>
         <div className="guide-summary-item">
-          <span className="guide-summary-label">Bonus temps</span>
-          <span className="guide-summary-value text-emerald-400">+{(timeBonus * 100).toFixed(1)}%</span>
+          <span className="guide-summary-label">Bonus carrière</span>
+          <span className="guide-summary-value text-emerald-400">+{(careerBonus * 100).toFixed(0)}%</span>
         </div>
       </div>
 

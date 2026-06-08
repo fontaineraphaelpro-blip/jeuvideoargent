@@ -1637,6 +1637,12 @@ html, body {
   margin-bottom: 0.4rem;
 }
 
+.roadmap-next-rank {
+  font-size: 0.55rem;
+  color: #f5c542;
+  margin-bottom: 0.4rem;
+}
+
 .roadmap-rank-bar {
   display: flex;
   gap: 2px;

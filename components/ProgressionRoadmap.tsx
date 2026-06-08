@@ -1,48 +1,42 @@
 "use client";
 
 import type { GameState } from "@/types/game";
-import {
-  CAMPAIGN_CHAPTERS,
-  getCurrentChapter,
-} from "@/lib/campaign";
+import { CAMPAIGN_CHAPTERS, getCurrentChapter } from "@/lib/campaign";
 import {
   CAREER_RANKS,
-  PLAYTIME_UNLOCKS,
   getCareerRank,
-  getPlayMinutes,
+  getNextCareerRank,
   getLockedAppsSummary,
   APP_LABELS,
 } from "@/lib/progression";
-import { formatDuration } from "@/lib/formatMoney";
 
 interface Props {
   state: GameState;
 }
 
 export default function ProgressionRoadmap({ state }: Props) {
-  const mins = getPlayMinutes(state);
   const rank = getCareerRank(state);
+  const nextRank = getNextCareerRank(state);
   const currentCh = getCurrentChapter(state.campaign);
   const locked = getLockedAppsSummary(state);
 
   return (
     <div className="progression-roadmap">
       <section className="roadmap-section">
-        <h3>🎖️ Carrière ({formatDuration(state.stats.playTimeSeconds)} jouées)</h3>
+        <h3>🎖️ Carrière — Nv.{state.level}</h3>
         <p className="roadmap-rank">{rank.title}</p>
         <p className="roadmap-rank-desc">{rank.description}</p>
+        {nextRank && (
+          <p className="roadmap-next-rank">
+            Prochain : <strong>{nextRank.title}</strong> au niveau {nextRank.minLevel}
+            ({nextRank.minLevel - state.level} lvl restants)
+          </p>
+        )}
         <div className="roadmap-rank-bar">
-          {CAREER_RANKS.map((r, i) => {
-            const active = mins >= r.minPlayMinutes;
-            const next = CAREER_RANKS[i + 1];
-            const progress = next
-              ? Math.min(1, (mins - r.minPlayMinutes) / (next.minPlayMinutes - r.minPlayMinutes))
-              : 1;
+          {CAREER_RANKS.map((r) => {
+            const active = state.level >= r.minLevel;
             return (
-              <div key={r.id} className={`roadmap-rank-node ${active ? "active" : ""}`} title={r.title}>
-                {active && i < CAREER_RANKS.length - 1 && (
-                  <div className="roadmap-rank-fill" style={{ width: `${progress * 100}%` }} />
-                )}
+              <div key={r.id} className={`roadmap-rank-node ${active ? "active" : ""}`} title={`Nv.${r.minLevel} — ${r.title}`}>
                 <span className="roadmap-rank-dot" />
                 <span className="roadmap-rank-label">{r.title}</span>
               </div>
@@ -64,7 +58,7 @@ export default function ProgressionRoadmap({ state }: Props) {
               <span className="roadmap-ch-status">{done ? "✓" : current ? "→" : "○"}</span>
               <div>
                 <strong>{ch.title.replace(/Chapitre \d+ — /, "")}</strong>
-                {current && <p className="roadmap-ch-hint">En cours — vois les objectifs ci-dessus</p>}
+                {current && <p className="roadmap-ch-hint">En cours — chaque objectif = cash bonus</p>}
                 {done && (
                   <p className="roadmap-ch-unlocks">
                     Débloque : {ch.unlockApps.filter((a) => a !== "guide" && a !== "settings" && a !== "dashboard").map((a) => APP_LABELS[a]).join(", ")}
@@ -76,25 +70,9 @@ export default function ProgressionRoadmap({ state }: Props) {
         })}
       </section>
 
-      <section className="roadmap-section">
-        <h3>⏱️ Récompenses temps de jeu</h3>
-        {PLAYTIME_UNLOCKS.map((pu) => {
-          const unlocked = state.progression.unlockedPlaytimeTiers.includes(pu.id);
-          return (
-            <div key={pu.id} className={`roadmap-time ${unlocked ? "done" : ""}`}>
-              <span>{unlocked ? "✓" : `${pu.minPlayMinutes} min`}</span>
-              <div>
-                <strong>{pu.title}</strong>
-                <p>{pu.description}</p>
-              </div>
-            </div>
-          );
-        })}
-      </section>
-
       {locked.length > 0 && (
         <section className="roadmap-section">
-          <h3>🔒 Prochains déblocages</h3>
+          <h3>🔓 Prochains déblocages</h3>
           {locked.slice(0, 4).map(({ app, info }) => (
             <div key={app} className="roadmap-locked">
               <strong>{APP_LABELS[app]}</strong>

@@ -4,39 +4,20 @@ import { CAMPAIGN_CHAPTERS, getCurrentChapter, isAppUnlocked as campaignUnlock }
 export interface CareerRank {
   id: string;
   title: string;
-  minPlayMinutes: number;
+  minLevel: number;
   description: string;
   incomeBonus: number;
 }
 
-export interface PlaytimeUnlock {
-  id: string;
-  minPlayMinutes: number;
-  title: string;
-  description: string;
-  unlockApps?: TabId[];
-  incomeBonus?: number;
-}
-
 export const CAREER_RANKS: CareerRank[] = [
-  { id: "intern", title: "Stagiaire", minPlayMinutes: 0, description: "Premier jour au bureau.", incomeBonus: 0 },
-  { id: "junior", title: "Junior", minPlayMinutes: 10, description: "Tu commences à comprendre les bases.", incomeBonus: 0.01 },
-  { id: "analyst", title: "Analyste", minPlayMinutes: 30, description: "Tu lis les chiffres avant d'agir.", incomeBonus: 0.02 },
-  { id: "associate", title: "Associate", minPlayMinutes: 60, description: "Une heure de jeu — tu maîtrises le bureau.", incomeBonus: 0.03 },
-  { id: "manager", title: "Manager", minPlayMinutes: 120, description: "Deux heures — tu gères plusieurs flux.", incomeBonus: 0.04 },
-  { id: "director", title: "Directeur", minPlayMinutes: 300, description: "Cinq heures — l'empire prend forme.", incomeBonus: 0.06 },
-  { id: "vp", title: "VP Finance", minPlayMinutes: 600, description: "Dix heures — tu es un habitué.", incomeBonus: 0.08 },
-  { id: "ceo", title: "PDG en devenir", minPlayMinutes: 1200, description: "Vingt heures — légende du coworking.", incomeBonus: 0.1 },
-];
-
-export const PLAYTIME_UNLOCKS: PlaytimeUnlock[] = [
-  { id: "pu_5m", minPlayMinutes: 5, title: "Premiers repères", description: "Tu connais ton bureau.", incomeBonus: 0.005 },
-  { id: "pu_15m", minPlayMinutes: 15, title: "Routine installée", description: "+0,5 % revenus permanents.", incomeBonus: 0.005 },
-  { id: "pu_30m", minPlayMinutes: 30, title: "Habitué du clavier", description: "Optimizer accessible plus tôt si besoin.", unlockApps: ["upgrades"], incomeBonus: 0.01 },
-  { id: "pu_60m", minPlayMinutes: 60, title: "Une heure de grind", description: "HR Desk débloqué (managers).", unlockApps: ["managers"], incomeBonus: 0.015 },
-  { id: "pu_120m", minPlayMinutes: 120, title: "Marathon financier", description: "Trophées & Analytics ouverts.", unlockApps: ["achievements", "stats"], incomeBonus: 0.02 },
-  { id: "pu_300m", minPlayMinutes: 300, title: "Vétéran", description: "+5 % revenus passifs permanents.", incomeBonus: 0.05 },
-  { id: "pu_600m", minPlayMinutes: 600, title: "Expert du bureau", description: "Accès anticipé Prestige (si 100M €).", unlockApps: ["prestige"], incomeBonus: 0.03 },
+  { id: "intern", title: "Stagiaire", minLevel: 1, description: "Premier deal — ça commence.", incomeBonus: 0 },
+  { id: "junior", title: "Junior", minLevel: 3, description: "Le cash coule déjà.", incomeBonus: 0.02 },
+  { id: "analyst", title: "Analyste", minLevel: 6, description: "Tu sens le momentum.", incomeBonus: 0.04 },
+  { id: "associate", title: "Associate", minLevel: 10, description: "Combo en feu — continue !", incomeBonus: 0.06 },
+  { id: "manager", title: "Manager", minLevel: 15, description: "L'empire grossit vite.", incomeBonus: 0.08 },
+  { id: "director", title: "Directeur", minLevel: 22, description: "Tu ne peux plus t'arrêter.", incomeBonus: 0.1 },
+  { id: "vp", title: "VP Finance", minLevel: 32, description: "Machine à dopamine financière.", incomeBonus: 0.13 },
+  { id: "ceo", title: "PDG en devenir", minLevel: 45, description: "Légende du coworking.", incomeBonus: 0.16 },
 ];
 
 export const APP_LABELS: Record<TabId, string> = {
@@ -54,40 +35,30 @@ export const APP_LABELS: Record<TabId, string> = {
   settings: "Paramètres",
 };
 
-export function getPlayMinutes(state: GameState): number {
-  return state.stats.playTimeSeconds / 60;
-}
-
 export function getCareerRank(state: GameState): CareerRank {
-  const mins = getPlayMinutes(state);
   let rank = CAREER_RANKS[0];
   for (const r of CAREER_RANKS) {
-    if (mins >= r.minPlayMinutes) rank = r;
+    if (state.level >= r.minLevel) rank = r;
   }
   return rank;
 }
 
-export function getPlaytimeBonus(state: GameState): number {
-  let bonus = getCareerRank(state).incomeBonus;
-  for (const tier of PLAYTIME_UNLOCKS) {
-    if (state.progression.unlockedPlaytimeTiers.includes(tier.id)) {
-      bonus += tier.incomeBonus ?? 0;
-    }
-  }
-  return bonus;
+export function getNextCareerRank(state: GameState): CareerRank | null {
+  const current = getCareerRank(state);
+  const idx = CAREER_RANKS.findIndex((r) => r.id === current.id);
+  return CAREER_RANKS[idx + 1] ?? null;
 }
 
-export function isAppUnlockedByPlaytime(state: GameState, app: TabId): boolean {
-  if (app === "guide" || app === "settings" || app === "dashboard") return true;
-  for (const tier of PLAYTIME_UNLOCKS) {
-    if (!state.progression.unlockedPlaytimeTiers.includes(tier.id)) continue;
-    if (tier.unlockApps?.includes(app)) return true;
-  }
-  return false;
+/** Bonus permanent lié au niveau / carrière — plus de temps de jeu */
+export function getCareerBonus(state: GameState): number {
+  return getCareerRank(state).incomeBonus;
 }
+
+/** @deprecated alias */
+export const getPlaytimeBonus = getCareerBonus;
 
 export function isAppFullyUnlocked(state: GameState, app: TabId): boolean {
-  return campaignUnlock(state, app) || isAppUnlockedByPlaytime(state, app);
+  return campaignUnlock(state, app);
 }
 
 export interface UnlockInfo {
@@ -103,17 +74,19 @@ export function getAppUnlockInfo(state: GameState, app: TabId): UnlockInfo {
     return { unlocked: true, reason: "Débloqué" };
   }
 
-  const mins = getPlayMinutes(state);
   const chapter = getCurrentChapter(state.campaign);
-
-  // Find which chapter unlocks this app
   const unlockChapter = CAMPAIGN_CHAPTERS.find((ch) => ch.unlockApps.includes(app));
+
   if (unlockChapter) {
     const chIdx = CAMPAIGN_CHAPTERS.indexOf(unlockChapter);
     const currentIdx = CAMPAIGN_CHAPTERS.findIndex((c) => c.id === chapter.id);
     if (currentIdx < chIdx) {
       const required = unlockChapter.objectives.filter((o) => !o.optional);
-      const done = required.filter((o) => state.campaign.objectivesDone.includes(o.id) || state.campaign.completedChapters.includes(unlockChapter.id)).length;
+      const done = required.filter(
+        (o) =>
+          state.campaign.objectivesDone.includes(o.id) ||
+          state.campaign.completedChapters.includes(unlockChapter.id)
+      ).length;
       return {
         unlocked: false,
         reason: `Termine le chapitre ${chIdx + 1}`,
@@ -122,18 +95,6 @@ export function getAppUnlockInfo(state: GameState, app: TabId): UnlockInfo {
         progressLabel: unlockChapter.title.replace(/Chapitre \d+ — /, ""),
       };
     }
-  }
-
-  // Playtime fallback
-  const ptUnlock = PLAYTIME_UNLOCKS.find((t) => t.unlockApps?.includes(app));
-  if (ptUnlock) {
-    return {
-      unlocked: false,
-      reason: `${Math.ceil(ptUnlock.minPlayMinutes - mins)} min de jeu restantes`,
-      progress: mins,
-      target: ptUnlock.minPlayMinutes,
-      progressLabel: ptUnlock.title,
-    };
   }
 
   if (app === "prestige") {
@@ -146,59 +107,31 @@ export function getAppUnlockInfo(state: GameState, app: TabId): UnlockInfo {
     };
   }
 
-  return { unlocked: false, reason: "Continue l'aventure" };
+  return { unlocked: false, reason: "Continue — prochain chapitre" };
 }
 
-export function checkPlaytimeUnlocks(state: GameState): GameState {
-  const mins = getPlayMinutes(state);
-  let s = { ...state };
-  let changed = false;
+export function checkCareerProgression(state: GameState): GameState {
+  const newRank = getCareerRank(state);
+  if (newRank.id === state.progression.careerRankId) return state;
 
-  for (const tier of PLAYTIME_UNLOCKS) {
-    if (s.progression.unlockedPlaytimeTiers.includes(tier.id)) continue;
-    if (mins >= tier.minPlayMinutes) {
-      s = {
-        ...s,
-        progression: {
-          ...s.progression,
-          unlockedPlaytimeTiers: [...s.progression.unlockedPlaytimeTiers, tier.id],
-          careerRankId: getCareerRank(s).id,
-        },
-        notifications: [
-          {
-            id: `pu_${tier.id}`,
-            title: `⏱️ ${tier.title}`,
-            message: tier.description,
-            type: "milestone" as const,
-            timestamp: Date.now(),
-          },
-          ...s.notifications,
-        ].slice(0, 20),
-      };
-      changed = true;
-    }
-  }
-
-  const newRank = getCareerRank(s);
-  if (newRank.id !== s.progression.careerRankId) {
-    s = {
-      ...s,
-      progression: { ...s.progression, careerRankId: newRank.id },
-      notifications: changed ? s.notifications : [
-        {
-          id: `rank_${newRank.id}`,
-          title: `Promotion : ${newRank.title}`,
-          message: newRank.description,
-          type: "levelup" as const,
-          timestamp: Date.now(),
-        },
-        ...s.notifications,
-      ].slice(0, 20),
-    };
-  }
-
-  return s;
+  return {
+    ...state,
+    progression: { ...state.progression, careerRankId: newRank.id },
+    notifications: [
+      {
+        id: `rank_${newRank.id}`,
+        title: `🔥 Promotion : ${newRank.title}`,
+        message: `${newRank.description} (+${(newRank.incomeBonus * 100).toFixed(0)} % revenus)`,
+        type: "levelup" as const,
+        timestamp: Date.now(),
+      },
+      ...state.notifications,
+    ].slice(0, 20),
+  };
 }
+
+/** @deprecated alias */
+export const checkPlaytimeUnlocks = checkCareerProgression;
 
 export function getChapterProgress(state: GameState): { current: number; total: number; percent: number } {
   const chapter = getCurrentChapter(state.campaign);
@@ -209,13 +142,6 @@ export function getChapterProgress(state: GameState): { current: number; total: 
     total: required.length,
     percent: required.length > 0 ? (done / required.length) * 100 : 0,
   };
-}
-
-export function getNextPlaytimeUnlock(state: GameState): PlaytimeUnlock | null {
-  const mins = getPlayMinutes(state);
-  return PLAYTIME_UNLOCKS.find(
-    (t) => !state.progression.unlockedPlaytimeTiers.includes(t.id) && mins < t.minPlayMinutes
-  ) ?? null;
 }
 
 export function getLockedAppsSummary(

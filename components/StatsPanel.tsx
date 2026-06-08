@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import type { GameState } from "@/types/game";
-import { formatMoney, formatDuration } from "@/lib/formatMoney";
+import { formatMoney } from "@/lib/formatMoney";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 interface Props {
@@ -23,7 +23,7 @@ export default function StatsPanel({ state }: Props) {
     { label: "Clics", value: stats.totalClicks.toLocaleString() },
     { label: "Missions", value: String(stats.missionsCompleted) },
     { label: "Meilleur capital", value: formatMoney(stats.bestCapital) },
-    { label: "Temps de jeu", value: formatDuration(stats.playTimeSeconds) },
+    { label: "Niveau", value: String(state.level) },
     { label: "Prestiges", value: String(stats.prestigeCount) },
     { label: "Plus gros gain", value: formatMoney(stats.biggestGain) },
     { label: "Plus grosse perte", value: formatMoney(stats.biggestLoss) },

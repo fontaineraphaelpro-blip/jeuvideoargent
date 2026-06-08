@@ -11,20 +11,20 @@ import type {
 } from "@/types/game";
 
 export const INITIAL_CAPITAL = 100;
-export const INITIAL_CLICK_POWER = 1.5;
-export const XP_PER_LEVEL = 100;
-export const GOLDEN_RUSH_DURATION = 15;
-export const GOLDEN_RUSH_METER_MAX = 100;
-export const COMBO_DECAY_MS = 2500;
+export const INITIAL_CLICK_POWER = 4;
+export const XP_PER_LEVEL = 55;
+export const GOLDEN_RUSH_DURATION = 22;
+export const GOLDEN_RUSH_METER_MAX = 45;
+export const COMBO_DECAY_MS = 4000;
 export const AUTOSAVE_INTERVAL_MS = 5000;
-export const MARKET_TICK_MS = 3000;
-export const PASSIVE_TICK_MS = 100;
-export const EVENT_CHECK_MIN_MS = 20000;
-export const EVENT_CHECK_MAX_MS = 45000;
+export const MARKET_TICK_MS = 2000;
+export const PASSIVE_TICK_MS = 50;
+export const EVENT_CHECK_MIN_MS = 8000;
+export const EVENT_CHECK_MAX_MS = 16000;
 
 export const BUSINESSES: Business[] = [
-  { id: "savings", name: "Compte épargne", description: "Intérêts modestes mais sûrs.", category: "finance", baseCost: 50, baseIncome: 0.5, risk: 1, icon: "PiggyBank", unlockAt: 0, multiplier: 1 },
-  { id: "freelance", name: "Micro-service freelance", description: "Petits contrats en ligne.", category: "tech", baseCost: 120, baseIncome: 1.2, risk: 2, icon: "Laptop", unlockAt: 0, multiplier: 1 },
+  { id: "savings", name: "Compte épargne", description: "Intérêts modestes mais sûrs.", category: "finance", baseCost: 40, baseIncome: 1.2, risk: 1, icon: "PiggyBank", unlockAt: 0, multiplier: 1 },
+  { id: "freelance", name: "Micro-service freelance", description: "Petits contrats en ligne.", category: "tech", baseCost: 90, baseIncome: 2.8, risk: 2, icon: "Laptop", unlockAt: 0, multiplier: 1 },
   { id: "ecommerce", name: "Boutique e-commerce", description: "Vente en ligne automatisée.", category: "retail", baseCost: 300, baseIncome: 3, risk: 3, icon: "ShoppingCart", unlockAt: 200, multiplier: 1 },
   { id: "youtube", name: "Chaîne YouTube business", description: "Monétisation de contenu.", category: "media", baseCost: 500, baseIncome: 5, risk: 4, icon: "Video", unlockAt: 500, multiplier: 1 },
   { id: "newsletter", name: "Newsletter premium", description: "Abonnements récurrents.", category: "media", baseCost: 800, baseIncome: 8, risk: 2, icon: "Mail", unlockAt: 1000, multiplier: 1 },

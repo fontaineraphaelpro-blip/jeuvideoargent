@@ -20,7 +20,7 @@ import {
 import { generateDailyObjectives, getTodaySeed } from "./dailyObjectives";
 import { initMarketState } from "./market";
 import { MISSIONS as MISSION_LIST } from "./missions";
-import { getPlaytimeBonus } from "./progression";
+import { getCareerBonus } from "./progression";
 
 export function createInitialState(): GameState {
   const now = Date.now();
@@ -179,7 +179,7 @@ export function calculatePassiveIncome(state: GameState): number {
   const repMult = 1 + state.reputation * 0.005;
   const milestoneBonus = getMilestoneBonus(state);
   const achievementBonus = getAchievementBonus(state);
-  const playtimeBonus = 1 + getPlaytimeBonus(state);
+  const playtimeBonus = 1 + getCareerBonus(state);
   const synergies = getActiveSynergies(state.businesses);
 
   for (const bs of state.businesses) {
@@ -237,7 +237,7 @@ export function getAchievementBonus(state: GameState): number {
 export function calculateClickIncome(state: GameState): number {
   const playstyleMult = state.campaign.playstyle === "conservative" ? 0.85
     : state.campaign.playstyle === "aggressive" ? 1.25 : 1;
-  const playtimeBonus = 1 + getPlaytimeBonus(state);
+  const playtimeBonus = 1 + getCareerBonus(state);
   let income = state.clickPower * playstyleMult * playtimeBonus;
   income *= getUpgradeMultiplier(state, "click");
   income *= getUpgradeMultiplier(state, "global");

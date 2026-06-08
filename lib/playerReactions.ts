@@ -99,7 +99,7 @@ export function detectPlayerReaction(
     };
   }
 
-  if (delta >= 1000) {
+  if (delta >= 500) {
     return {
       id,
       type: "mega_win",
@@ -113,7 +113,7 @@ export function detectPlayerReaction(
     };
   }
 
-  if (delta >= 200 || (delta >= 80 && prev.capital > 0 && delta >= prev.capital * 0.3)) {
+  if (delta >= 80 || (delta >= 40 && prev.capital > 0 && delta >= prev.capital * 0.25)) {
     return {
       id,
       type: "big_win",
