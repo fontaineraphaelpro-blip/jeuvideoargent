@@ -18,6 +18,8 @@ import Particles from "./Particles";
 import DecisionModal from "./DecisionModal";
 import IntroModal from "./IntroModal";
 import BankruptcyModal from "./BankruptcyModal";
+import PlayerReactionScene from "./PlayerReactionScene";
+import { usePlayerReactions } from "@/hooks/usePlayerReactions";
 
 export default function DeskScene() {
   const game = useGameState();
@@ -37,6 +39,14 @@ export default function DeskScene() {
 
   const [typing, setTyping] = useState(false);
   const [clicking, setClicking] = useState(false);
+
+  const {
+    activeReaction,
+    mood,
+    monitorCracked,
+    showBankruptcyModal,
+    phraseIndex,
+  } = usePlayerReactions(state, typing, clicking, state.settings.soundEnabled);
 
   useGameLoop(loaded, dispatch, state.goldenRushMeter);
 
@@ -80,10 +90,11 @@ export default function DeskScene() {
       <Confetti active={showConfetti} />
       <Particles active={showParticles} />
       <DecisionModal state={state} onChoice={actions.decisionChoice} />
+      <PlayerReactionScene reaction={activeReaction} phraseIndex={phraseIndex} />
       {state.gamePhase === "intro" && (
         <IntroModal onChoose={actions.setPlaystyle} />
       )}
-      {state.gamePhase === "bankrupt" && (
+      {showBankruptcyModal && state.gamePhase === "bankrupt" && (
         <BankruptcyModal state={state} onRestart={actions.restartRun} />
       )}
 
@@ -93,6 +104,9 @@ export default function DeskScene() {
         goldenRush={showGoldenRush}
         typing={typing}
         clicking={clicking}
+        mood={mood}
+        monitorCracked={monitorCracked}
+        shakeIntensity={activeReaction?.shakeIntensity ?? "none"}
       >
         <DesktopOS
           state={state}

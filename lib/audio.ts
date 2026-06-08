@@ -8,7 +8,11 @@ type SoundType =
   | "error"
   | "achievement"
   | "event"
-  | "decision";
+  | "decision"
+  | "crash"
+  | "rage"
+  | "victory"
+  | "panic";
 
 let audioCtx: AudioContext | null = null;
 
@@ -89,6 +93,30 @@ export function playSound(type: SoundType, enabled = true) {
       break;
     case "decision":
       playChord([330, 415, 523], 0.3, 0.12);
+      break;
+    case "crash":
+      playTone(80, 0.5, "square", 0.2);
+      setTimeout(() => playTone(120, 0.3, "sawtooth", 0.15), 80);
+      setTimeout(() => playTone(60, 0.6, "square", 0.12), 200);
+      for (let i = 0; i < 6; i++) {
+        setTimeout(() => playTone(2000 + Math.random() * 3000, 0.05, "square", 0.06), 300 + i * 40);
+      }
+      break;
+    case "rage":
+      playTone(150, 0.15, "square", 0.14);
+      setTimeout(() => playTone(100, 0.2, "sawtooth", 0.12), 100);
+      setTimeout(() => playTone(180, 0.15, "square", 0.1), 250);
+      setTimeout(() => playTone(90, 0.25, "sawtooth", 0.14), 400);
+      setTimeout(() => playTone(70, 0.3, "square", 0.1), 600);
+      break;
+    case "victory":
+      playChord([523, 659, 784, 1047], 0.5, 0.18);
+      setTimeout(() => playChord([587, 740, 880, 1175], 0.4, 0.16), 200);
+      setTimeout(() => playTone(1318, 0.35, "triangle", 0.14), 450);
+      break;
+    case "panic":
+      playTone(300, 0.25, "triangle", 0.1);
+      setTimeout(() => playTone(220, 0.3, "sine", 0.08), 150);
       break;
   }
 }

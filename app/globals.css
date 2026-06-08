@@ -435,6 +435,249 @@ html, body {
   filter: brightness(0.95);
 }
 
+.player-hands--rage .hand,
+.player-hands--smash .hand {
+  filter: brightness(1.1) saturate(1.2);
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+}
+
+.player-hands--celebrate .hand,
+.player-hands--victory .hand {
+  filter: brightness(1.15);
+  box-shadow: 0 0 14px rgba(245, 197, 66, 0.5);
+}
+
+.hand-impact-ring {
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 60px;
+  border: 3px solid rgba(239, 68, 68, 0.7);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Monitor crack & emotional states */
+.desk-monitor--cracked {
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 20px rgba(239, 68, 68, 0.2);
+}
+
+.desk-monitor--cracked .desk-monitor-screen {
+  filter: contrast(1.1) saturate(0.85);
+}
+
+.desk-monitor--euphoric {
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 35px rgba(245, 197, 66, 0.45);
+}
+
+.desk-monitor--euphoric .desk-monitor-screen {
+  box-shadow: inset 0 0 40px rgba(245, 197, 66, 0.2);
+}
+
+.desk-monitor-power--dead {
+  background: #ef4444 !important;
+  box-shadow: 0 0 8px #ef4444 !important;
+  animation: power-dead 0.4s ease-in-out infinite alternate !important;
+}
+
+@keyframes power-dead {
+  from { opacity: 1; }
+  to { opacity: 0.3; }
+}
+
+.monitor-crack {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.monitor-crack-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.monitor-crack-svg line {
+  stroke: rgba(255, 255, 255, 0.55);
+  filter: drop-shadow(0 0 2px rgba(0,0,0,0.8));
+}
+
+.monitor-crack--heavy .monitor-crack-svg line {
+  stroke-width: 2;
+  stroke: rgba(255, 255, 255, 0.7);
+}
+
+.monitor-crack-glitch {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 255, 255, 0.03) 2px,
+    rgba(255, 255, 255, 0.03) 4px
+  );
+  animation: monitor-glitch 0.15s steps(2) infinite;
+  opacity: 0.5;
+}
+
+@keyframes monitor-glitch {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(2px); }
+  100% { transform: translateX(-1px); }
+}
+
+.desk-scene--rage .desk-lamp-glow {
+  filter: hue-rotate(-30deg) saturate(1.5);
+}
+
+.desk-scene--rage .desk-room-wall {
+  background: linear-gradient(180deg, #140a0a 0%, #1a1010 40%, #1f1414 100%);
+}
+
+.desk-scene--euphoric .desk-lamp-glow {
+  filter: hue-rotate(15deg) brightness(1.2);
+}
+
+.desk-scene--cracked .desk-ambient-text {
+  color: rgba(239, 68, 68, 0.6) !important;
+}
+
+/* Player reaction overlay */
+.player-reaction-scene {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-reaction-flash {
+  position: absolute;
+  inset: 0;
+}
+
+.player-reaction-flash--red {
+  background: radial-gradient(ellipse at 50% 40%, rgba(239, 68, 68, 0.5), transparent 70%);
+}
+
+.player-reaction-flash--gold {
+  background: radial-gradient(ellipse at 50% 50%, rgba(245, 197, 66, 0.45), transparent 65%);
+}
+
+.player-reaction-vignette {
+  position: absolute;
+  inset: 0;
+}
+
+.player-reaction-vignette--rage {
+  background: radial-gradient(ellipse at center, transparent 30%, rgba(120, 0, 0, 0.55) 100%);
+}
+
+.player-reaction-vignette--win {
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(245, 197, 66, 0.2) 100%);
+}
+
+.player-reaction-vignette--loss {
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(30, 0, 0, 0.35) 100%);
+}
+
+.player-reaction-static {
+  position: absolute;
+  inset: 0;
+  opacity: 0.08;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: static-flicker 0.1s steps(4) infinite;
+}
+
+@keyframes static-flicker {
+  0%, 100% { opacity: 0.06; }
+  50% { opacity: 0.14; }
+}
+
+.glass-shard {
+  position: absolute;
+  width: 8px;
+  height: 14px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.5), rgba(200,220,255,0.2));
+  border: 1px solid rgba(255,255,255,0.3);
+  pointer-events: none;
+}
+
+.win-sparkle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #f5c542;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  pointer-events: none;
+}
+
+.player-reaction-bubble {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  max-width: 90vw;
+}
+
+.player-reaction-bubble--rage {
+  background: rgba(20, 0, 0, 0.85);
+  border: 2px solid rgba(239, 68, 68, 0.7);
+  box-shadow: 0 0 40px rgba(239, 68, 68, 0.4), 0 8px 32px rgba(0,0,0,0.6);
+}
+
+.player-reaction-bubble--win {
+  background: rgba(20, 15, 0, 0.8);
+  border: 2px solid rgba(245, 197, 66, 0.7);
+  box-shadow: 0 0 40px rgba(245, 197, 66, 0.35), 0 8px 32px rgba(0,0,0,0.5);
+}
+
+.player-reaction-text {
+  display: block;
+  font-size: clamp(1.4rem, 5vw, 2.4rem);
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.player-reaction-bubble--rage .player-reaction-text {
+  color: #fca5a5;
+  text-shadow: 0 0 20px rgba(239, 68, 68, 0.8), 2px 2px 0 #7f1d1d;
+}
+
+.player-reaction-bubble--win .player-reaction-text {
+  color: #fde68a;
+  text-shadow: 0 0 20px rgba(245, 197, 66, 0.7), 2px 2px 0 #78350f;
+}
+
+.player-reaction-amount {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: clamp(1rem, 3vw, 1.4rem);
+  font-weight: 700;
+  color: #4ade80;
+}
+
+.player-reaction-amount--loss {
+  color: #f87171;
+}
+
+.player-reaction-sub {
+  position: absolute;
+  bottom: 18%;
+  font-size: 0.75rem;
+  color: rgba(248, 113, 113, 0.7);
+  font-style: italic;
+  letter-spacing: 0.08em;
+}
+
 /* Desk props */
 .desk-sticky {
   position: absolute;
