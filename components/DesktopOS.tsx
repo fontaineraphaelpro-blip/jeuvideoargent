@@ -8,8 +8,9 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import type { GameState, TabId } from "@/types/game";
-import { isAppUnlocked } from "@/lib/campaign";
+import { isAppFullyUnlocked, getAppUnlockInfo, getCareerRank } from "@/lib/progression";
 import CampaignGuide from "./CampaignGuide";
+import CoachBanner from "./CoachBanner";
 import { formatMoney } from "@/lib/formatMoney";
 import { GOLDEN_RUSH_METER_MAX } from "@/lib/gameData";
 import CapitalCounter from "./CapitalCounter";
@@ -87,7 +88,7 @@ export default function DesktopOS({ state, clickIncome, onIncomeClick, onClaim, 
   }, [state.gamePhase, openApp]);
 
   const openWindow = (id: TabId) => {
-    if (!isAppUnlocked(state, id)) return;
+    if (!isAppFullyUnlocked(state, id)) return;
     setMinimized((prev) => {
       const next = new Set(prev);
       next.delete(id);
@@ -109,6 +110,11 @@ export default function DesktopOS({ state, clickIncome, onIncomeClick, onClaim, 
       case "dashboard":
         return (
           <div className="os-app-content os-app-content--cashflow">
+            {state.campaign.chapterId === "ch1_first_day" && (
+              <div className="app-help-banner">
+                👆 Clique sur « Clôturer un deal » pour gagner de l&apos;argent. C&apos;est ton premier outil !
+              </div>
+            )}
             <div className="os-cashflow-header">
               <CapitalCounter value={state.capital} size="sm" />
               <div className="os-cashflow-stats">
@@ -176,11 +182,14 @@ export default function DesktopOS({ state, clickIncome, onIncomeClick, onClaim, 
       {/* Wallpaper */}
       <div className="desktop-wallpaper" />
 
+      <CoachBanner state={state} onOpenApp={openWindow} />
+
       {/* Desktop icons */}
       <div className="desktop-icons">
         {APPS.map((app) => {
           const Icon = app.icon;
-          const unlocked = isAppUnlocked(state, app.id);
+          const unlocked = isAppFullyUnlocked(state, app.id);
+          const lockInfo = getAppUnlockInfo(state, app.id);
           const isOpen = openApp === app.id;
           const isMin = minimized.has(app.id);
           return (
@@ -190,14 +199,15 @@ export default function DesktopOS({ state, clickIncome, onIncomeClick, onClaim, 
               onDoubleClick={() => unlocked && openWindow(app.id)}
               onClick={() => unlocked && openWindow(app.id)}
               disabled={!unlocked}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              title={app.description}
+              whileHover={{ scale: unlocked ? 1.05 : 1 }}
+              whileTap={{ scale: unlocked ? 0.95 : 1 }}
+              title={unlocked ? app.description : `🔒 ${lockInfo.reason}`}
             >
               <div className="desktop-icon-img" style={{ backgroundColor: app.color + "33", borderColor: app.color + "66" }}>
-                <Icon className="h-5 w-5" color={app.color} />
+                <Icon className="h-5 w-5" color={unlocked ? app.color : "#64748b"} />
               </div>
               <span>{app.name}</span>
+              {!unlocked && <span className="desktop-icon-lock">{lockInfo.reason}</span>}
             </motion.button>
           );
         })}
@@ -277,6 +287,7 @@ export default function DesktopOS({ state, clickIncome, onIncomeClick, onClaim, 
         <div className="os-taskbar-tray">
           <Wifi className="h-3.5 w-3.5 text-slate-400" />
           <Mail className="h-3.5 w-3.5 text-slate-400" />
+          <span className="os-tray-rank" title="Rang carrière">{getCareerRank(state).title}</span>
           <span className="os-tray-level">Nv.{state.level}</span>
           <span className="os-tray-clock">22:34</span>
         </div>

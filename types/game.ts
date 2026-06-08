@@ -78,6 +78,12 @@ export interface RunEconomy {
   lastOverheadTick: number;
 }
 
+export interface ProgressionState {
+  careerRankId: string;
+  unlockedPlaytimeTiers: string[];
+  dismissedCoachTips: string[];
+}
+
 export interface Business {
   id: string;
   name: string;
@@ -399,5 +405,6 @@ export interface GameState {
   gamePhase: GamePhase;
   campaign: CampaignState;
   runEconomy: RunEconomy;
+  progression: ProgressionState;
   endingTitle: string | null;
 }

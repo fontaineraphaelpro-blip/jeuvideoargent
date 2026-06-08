@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import type { FloatingMoneyItem, GameState, Playstyle } from "@/types/game";
 import { checkCampaignObjectives } from "@/lib/campaign";
+import { checkPlaytimeUnlocks } from "@/lib/progression";
 import { playSound } from "@/lib/audio";
 import {
   applyCapitalChange,
@@ -141,6 +142,7 @@ function gameReducer(state: GameState, action: Action): GameState {
       s = updateMissions(s);
       s = updateAchievements(s);
       s = checkCampaignObjectives(s);
+      s = checkPlaytimeUnlocks(s);
       const milestoneResult = checkMilestones(s);
       s = milestoneResult.state;
 

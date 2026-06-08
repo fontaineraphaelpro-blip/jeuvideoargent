@@ -20,6 +20,7 @@ import {
 import { generateDailyObjectives, getTodaySeed } from "./dailyObjectives";
 import { initMarketState } from "./market";
 import { MISSIONS as MISSION_LIST } from "./missions";
+import { getPlaytimeBonus } from "./progression";
 
 export function createInitialState(): GameState {
   const now = Date.now();
@@ -107,6 +108,11 @@ export function createInitialState(): GameState {
       lastOverheadTick: Date.now(),
     },
     endingTitle: null,
+    progression: {
+      careerRankId: "intern",
+      unlockedPlaytimeTiers: [],
+      dismissedCoachTips: [],
+    },
   };
 }
 
@@ -173,6 +179,7 @@ export function calculatePassiveIncome(state: GameState): number {
   const repMult = 1 + state.reputation * 0.005;
   const milestoneBonus = getMilestoneBonus(state);
   const achievementBonus = getAchievementBonus(state);
+  const playtimeBonus = 1 + getPlaytimeBonus(state);
   const synergies = getActiveSynergies(state.businesses);
 
   for (const bs of state.businesses) {
@@ -190,7 +197,7 @@ export function calculatePassiveIncome(state: GameState): number {
     total += income;
   }
 
-  total *= passiveMult * globalMult * prestigeMult * repMult * milestoneBonus * achievementBonus;
+  total *= passiveMult * globalMult * prestigeMult * repMult * milestoneBonus * achievementBonus * playtimeBonus;
 
   for (const bonus of state.temporaryBonuses) {
     if (bonus.expiresAt > Date.now() && bonus.incomeMultiplier) {
@@ -230,7 +237,8 @@ export function getAchievementBonus(state: GameState): number {
 export function calculateClickIncome(state: GameState): number {
   const playstyleMult = state.campaign.playstyle === "conservative" ? 0.85
     : state.campaign.playstyle === "aggressive" ? 1.25 : 1;
-  let income = state.clickPower * playstyleMult;
+  const playtimeBonus = 1 + getPlaytimeBonus(state);
+  let income = state.clickPower * playstyleMult * playtimeBonus;
   income *= getUpgradeMultiplier(state, "click");
   income *= getUpgradeMultiplier(state, "global");
   income *= 1 + state.prestige.points * 0.1;
