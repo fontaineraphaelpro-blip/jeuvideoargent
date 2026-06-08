@@ -52,13 +52,13 @@ export default function GoldenRushOverlay({ active, endTime }: Props) {
           <motion.div
             initial={{ scale: 0, rotate: -10 }}
             animate={{ scale: 1, rotate: 0 }}
-            className="absolute top-1/4 left-1/2 -translate-x-1/2 text-center"
+            className="absolute top-[18%] left-1/2 -translate-x-1/2 text-center"
           >
-            <h2 className="text-5xl md:text-7xl font-black text-gradient-gold drop-shadow-lg">
+            <h2 className="text-3xl md:text-5xl font-black text-gradient-gold drop-shadow-lg">
               GOLDEN RUSH
             </h2>
-            <p className="text-2xl text-yellow-300 mt-2 font-bold">{remaining}s</p>
-            <p className="text-sm text-yellow-200/80 mt-1">Revenus x3 • Clics x5</p>
+            <p className="text-lg text-yellow-300 mt-1 font-bold">{remaining}s</p>
+            <p className="text-xs text-yellow-200/80 mt-1">L&apos;écran déborde d&apos;or — x3 revenus, x5 deals</p>
           </motion.div>
         </motion.div>
       )}

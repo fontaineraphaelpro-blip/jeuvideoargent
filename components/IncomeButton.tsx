@@ -10,25 +10,28 @@ interface Props {
   comboMultiplier: number;
   onClick: (e: React.MouseEvent) => void;
   goldenRush: boolean;
+  compact?: boolean;
 }
 
-export default function IncomeButton({ clickIncome, combo, comboMultiplier, onClick, goldenRush }: Props) {
+export default function IncomeButton({ clickIncome, combo, comboMultiplier, onClick, goldenRush, compact }: Props) {
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex flex-col items-center gap-2">
       <motion.button
         whileTap={{ scale: 0.92 }}
         whileHover={{ scale: 1.05 }}
         onClick={(e) => onClick(e)}
-        className={`btn-glow relative rounded-2xl px-10 py-6 font-bold text-lg transition-all ${
+        className={`btn-glow relative rounded-xl font-bold transition-all ${
+          compact ? "px-6 py-3 text-sm" : "rounded-2xl px-10 py-6 text-lg"
+        } ${
           goldenRush
             ? "bg-gradient-to-r from-yellow-500 via-amber-400 to-yellow-500 text-black glow-gold"
             : "bg-gradient-to-r from-emerald-600 to-emerald-500 text-white glow-emerald"
         }`}
       >
-        <Zap className="inline mr-2 h-5 w-5" />
-        Générer du cash
-        <span className="block text-sm font-normal opacity-80 mt-1">
-          +{formatMoney(clickIncome)} / clic
+        <Zap className={`inline mr-1 ${compact ? "h-4 w-4" : "h-5 w-5"}`} />
+        Clôturer un deal
+        <span className={`block font-normal opacity-80 mt-1 ${compact ? "text-xs" : "text-sm"}`}>
+          +{formatMoney(clickIncome)} / action
         </span>
       </motion.button>
 

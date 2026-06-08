@@ -1,0 +1,27 @@
+---
+description: Commit et push GitHub après chaque modification du projet
+alwaysApply: true
+---
+
+# Auto-push GitHub
+
+Après chaque modification de code dans ce projet, **commit et push** vers le dépôt distant :
+
+- Remote : `https://github.com/fontaineraphaelpro-blip/jeuvideoargent.git`
+- Branche : `main`
+
+## Workflow obligatoire en fin de tâche
+
+1. Vérifier `git status` et `git diff`
+2. `git add` les fichiers pertinents (jamais `.env`, secrets, `node_modules`)
+3. Créer un commit avec un message court décrivant le **pourquoi**
+4. `git push origin main`
+5. Confirmer à l'utilisateur que le push a réussi
+
+## Règles
+
+- Ne pas demander confirmation avant de commit/push
+- Un commit par lot de modifications cohérent (pas un commit par ligne)
+- Si `package-lock.json` change, l'inclure dans le commit
+- Ne jamais `git push --force` sur `main`
+- Ne jamais modifier `git config`
